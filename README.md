@@ -74,21 +74,15 @@ TRADING_SYMBOL=BTC/USDT
 RISK_PER_TRADE=0.02
 ```
 
-### 3. Run Backtest
+### 3. Run the Bot
 
 ```bash
-# Download historical data
-python scripts/download_data.py
+# Run in backtest mode (safe, single iteration)
+python main.py
 
-# Run backtest
-python scripts/run_backtest.py
-```
-
-### 4. Launch Dashboard
-
-```bash
-# Start Streamlit dashboard
-streamlit run dashboard/app.py
+# Or run components individually for testing
+python -m src.strategy.llm_strategy
+python -m src.risk.risk_manager
 ```
 
 ## 📊 Trading Modes
@@ -116,7 +110,7 @@ BINANCE_TESTNET=true
 python main.py
 ```
 
-### 3. Live Trading Mode
+### 3. Live Trading Mode (Spot)
 **⚠️ USE WITH EXTREME CAUTION**
 
 Only use after:
@@ -127,11 +121,35 @@ Only use after:
 ```bash
 # In .env file:
 TRADING_MODE=live
+MARKET_TYPE=spot
 BINANCE_TESTNET=false  # Real money!
 
 # Run live trading
 python main.py
 ```
+
+### 4. Futures Trading Mode
+**⚠️⚠️⚠️ EXTREME RISK - USE WITH CAUTION ⚠️⚠️⚠️**
+
+Futures trading with leverage can lead to **liquidation** and complete loss of capital.
+
+```bash
+# In .env file:
+MARKET_TYPE=futures
+LEVERAGE=5              # 1-125x (Start LOW!)
+MARGIN_MODE=isolated    # isolated (safer) or cross
+TRADING_MODE=paper      # Test with paper trading first!
+
+# Run futures paper trading
+python main.py
+```
+
+**Important Futures Notes:**
+- **Start with LOW leverage** (1-5x) - Higher leverage = Higher liquidation risk
+- **Use isolated margin** - Limits loss to position margin only
+- **Test extensively** with paper trading before real money
+- **Monitor constantly** - Futures positions can liquidate quickly
+- **Understand liquidation price** - Know your risk before entering
 
 ## 🏗️ Project Structure
 
@@ -140,7 +158,7 @@ AutoTrading/
 ├── src/
 │   ├── config/          # Configuration management
 │   ├── data/            # Data collection (Binance API, indicators)
-│   ├── llm/             # LLM integration (Claude)
+│   ├── llm/             # LLM integration (Gemini)
 │   ├── strategy/        # Trading strategies
 │   ├── backtesting/     # Backtesting engine
 │   ├── risk/            # Risk management

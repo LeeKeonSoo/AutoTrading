@@ -28,19 +28,39 @@ class Settings(BaseSettings):
     binance_testnet: bool = Field(default=True, description="Use Binance testnet")
 
     # ============================================
-    # Anthropic API Configuration
+    # Google Gemini API Configuration
     # ============================================
-    anthropic_api_key: str = Field(..., description="Anthropic API key")
-    anthropic_model: str = Field(
-        default="claude-3-5-sonnet-20240620",
-        description="Claude model to use"
+    gemini_api_key: str = Field(..., description="Gemini API key")
+    gemini_model: str = Field(
+        default="gemini-2.0-flash-exp",
+        description="Gemini model to use"
     )
-    anthropic_max_tokens: int = Field(default=4096, description="Max tokens per request")
+    gemini_max_tokens: int = Field(default=4096, description="Max tokens per request")
+    gemini_temperature: float = Field(
+        default=0.7,
+        ge=0.0,
+        le=2.0,
+        description="Temperature for response generation"
+    )
 
     # ============================================
     # Trading Configuration
     # ============================================
     trading_symbol: str = Field(default="BTC/USDT", description="Trading pair")
+    market_type: Literal["spot", "futures"] = Field(
+        default="spot",
+        description="Market type (spot or futures)"
+    )
+    leverage: int = Field(
+        default=1,
+        ge=1,
+        le=125,
+        description="Leverage for futures trading (1-125x)"
+    )
+    margin_mode: Literal["isolated", "cross"] = Field(
+        default="isolated",
+        description="Margin mode for futures"
+    )
     trading_mode: Literal["backtest", "paper", "live"] = Field(
         default="backtest",
         description="Trading mode"
@@ -295,8 +315,16 @@ class Settings(BaseSettings):
             if "your_" in self.binance_api_key.lower():
                 warnings.append("❌ ERROR: Binance API key not configured!")
 
-        if "your_" in self.anthropic_api_key.lower():
-            warnings.append("❌ ERROR: Anthropic API key not configured!")
+        if "your_" in self.gemini_api_key.lower():
+            warnings.append("❌ ERROR: Gemini API key not configured!")
+
+        # Check futures trading warnings
+        if self.market_type == "futures":
+            warnings.append("⚠️  FUTURES TRADING ENABLED - Higher risk of liquidation!")
+            if self.leverage > 10:
+                warnings.append(f"⚠️  HIGH LEVERAGE: {self.leverage}x - Extreme risk!")
+            if self.margin_mode == "cross":
+                warnings.append("⚠️  CROSS MARGIN - Entire account balance at risk!")
 
         return warnings
 
@@ -306,6 +334,10 @@ class Settings(BaseSettings):
         print("🤖 Auto Trading Bot - Configuration Summary")
         print("=" * 60)
         print(f"Trading Mode:     {self.trading_mode.upper()}")
+        print(f"Market Type:      {self.market_type.upper()}")
+        if self.market_type == "futures":
+            print(f"Leverage:         {self.leverage}x")
+            print(f"Margin Mode:      {self.margin_mode.upper()}")
         print(f"Testnet:          {self.binance_testnet}")
         print(f"Symbol:           {self.trading_symbol}")
         print(f"Timeframe:        {self.trading_timeframe}")
@@ -314,7 +346,7 @@ class Settings(BaseSettings):
         print(f"Stop Loss:        {self.default_stop_loss_pct*100}%")
         print(f"Take Profit:      {self.default_take_profit_pct*100}%")
         print(f"Min Confidence:   {self.min_confidence}")
-        print(f"LLM Model:        {self.anthropic_model}")
+        print(f"LLM Model:        {self.gemini_model}")
         print("=" * 60)
 
         # Print warnings
