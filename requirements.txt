@@ -1,6 +1,6 @@
 # Core Trading Libraries
 ccxt>=4.2.25                    # Unified exchange API
-google-generativeai>=0.8.3      # Gemini API client (Google AI)
+google-genai>=1.0.0             # NEW Gemini API (replaces google-generativeai)
 
 # Web Framework
 fastapi>=0.109.0

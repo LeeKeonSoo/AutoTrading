@@ -4,16 +4,17 @@ Get your trading bot running in 5 minutes!
 
 ## Step 1: Install Dependencies (2 min)
 
-```bash
-# Create virtual environment
+**Windows:**
+```cmd
 python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-# Activate it
-source venv/bin/activate  # macOS/Linux
-# OR
-venv\Scripts\activate     # Windows
-
-# Install packages
+**macOS/Linux:**
+```bash
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -50,11 +51,13 @@ BINANCE_TESTNET=true
 ## Step 4: Test Run (1 min)
 
 ```bash
-# Test components individually
-python -m src.config.settings           # Check config
-python -m src.llm.gemini_client        # Test Gemini
-python -m src.data.binance_client      # Test Binance
-python -m src.strategy.llm_strategy    # Test strategy
+# Quick test (recommended)
+python run_test.py
+
+# Or test components individually
+python -m src.config.settings
+python -m src.llm.gemini_client
+python -m src.data.binance_client
 
 # Run full bot (backtest mode)
 python main.py

@@ -1,12 +1,13 @@
 """
 Google Gemini API client for trading decisions.
-Uses the google-generativeai library to interact with Gemini models.
+Uses the NEW google-genai library (v1.0+).
 """
 
 import json
 from typing import Dict, Any, Optional
 from loguru import logger
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -26,21 +27,19 @@ class GeminiClient:
         """Initialize Gemini client."""
         self.settings = get_settings()
 
-        # Configure Gemini API
-        genai.configure(api_key=self.settings.gemini_api_key)
+        # Create client
+        self.client = genai.Client(api_key=self.settings.gemini_api_key)
 
-        # Initialize model
-        self.model = genai.GenerativeModel(
-            model_name=self.settings.gemini_model,
-            generation_config={
-                "temperature": self.settings.gemini_temperature,
-                "max_output_tokens": self.settings.gemini_max_tokens,
-                "response_mime_type": "application/json",  # Request JSON output
-            }
+        # Model configuration
+        self.model_id = self.settings.gemini_model
+        self.generation_config = types.GenerateContentConfig(
+            temperature=self.settings.gemini_temperature,
+            max_output_tokens=self.settings.gemini_max_tokens,
+            response_mime_type="application/json",
         )
 
         logger.info(
-            f"GeminiClient initialized with model {self.settings.gemini_model} "
+            f"GeminiClient initialized with model {self.model_id} "
             f"(temp={self.settings.gemini_temperature})"
         )
 
@@ -74,19 +73,21 @@ class GeminiClient:
             # Combine system and user prompts
             full_prompt = f"{system_prompt}\n\n{user_prompt}"
 
-            # Update generation config if temperature is specified
+            # Override temperature if specified
+            config = self.generation_config
             if temperature is not None:
-                generation_config = {
-                    "temperature": temperature,
-                    "max_output_tokens": self.settings.gemini_max_tokens,
-                    "response_mime_type": "application/json",
-                }
-                response = self.model.generate_content(
-                    full_prompt,
-                    generation_config=generation_config,
+                config = types.GenerateContentConfig(
+                    temperature=temperature,
+                    max_output_tokens=self.settings.gemini_max_tokens,
+                    response_mime_type="application/json",
                 )
-            else:
-                response = self.model.generate_content(full_prompt)
+
+            # Generate content
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents=full_prompt,
+                config=config,
+            )
 
             # Extract text from response
             response_text = response.text.strip()
@@ -115,8 +116,11 @@ class GeminiClient:
             Number of tokens
         """
         try:
-            result = self.model.count_tokens(text)
-            return result.total_tokens
+            response = self.client.models.count_tokens(
+                model=self.model_id,
+                contents=text,
+            )
+            return response.total_tokens
         except Exception as e:
             logger.warning(f"Failed to count tokens: {e}")
             # Rough estimate: ~4 chars per token
@@ -130,9 +134,10 @@ class GeminiClient:
             True if connection works
         """
         try:
-            response = self.model.generate_content(
-                "Respond with just the word 'OK' if you can read this.",
-                generation_config={"max_output_tokens": 10}
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents="Respond with just the word 'OK' if you can read this.",
+                config=types.GenerateContentConfig(max_output_tokens=10),
             )
             result = "ok" in response.text.lower()
             if result:
@@ -144,30 +149,6 @@ class GeminiClient:
             logger.error(f"Gemini API connection failed: {e}")
             return False
 
-    def get_model_info(self) -> Dict[str, Any]:
-        """
-        Get information about the current model.
-
-        Returns:
-            Dictionary with model information
-        """
-        try:
-            model = genai.get_model(f"models/{self.settings.gemini_model}")
-            return {
-                "name": model.name,
-                "display_name": model.display_name,
-                "description": model.description,
-                "input_token_limit": model.input_token_limit,
-                "output_token_limit": model.output_token_limit,
-                "supported_generation_methods": model.supported_generation_methods,
-            }
-        except Exception as e:
-            logger.error(f"Failed to get model info: {e}")
-            return {
-                "name": self.settings.gemini_model,
-                "error": str(e),
-            }
-
     def list_available_models(self) -> list:
         """
         List all available Gemini models.
@@ -176,12 +157,8 @@ class GeminiClient:
             List of model names
         """
         try:
-            models = genai.list_models()
-            model_names = [
-                model.name.replace("models/", "")
-                for model in models
-                if "generateContent" in model.supported_generation_methods
-            ]
+            models = self.client.models.list()
+            model_names = [model.name for model in models]
             logger.info(f"Found {len(model_names)} available models")
             return model_names
         except Exception as e:
@@ -208,19 +185,13 @@ if __name__ == "__main__":
             print("❌ Connection failed")
             sys.exit(1)
 
-        # Get model info
-        print("\n=== Model Info ===")
-        info = client.get_model_info()
-        for key, value in info.items():
-            print(f"{key}: {value}")
-
         # Test trading decision generation
         print("\n=== Test Trading Decision ===")
         system_prompt = """You are a cryptocurrency trading assistant.
 Analyze the market data and respond with JSON containing:
 {
   "action": "BUY|SELL|HOLD|CLOSE",
-  "confidence": 0.0-1.0,
+  "confidence": 0.85,
   "reasoning": "Brief explanation"
 }"""
 
