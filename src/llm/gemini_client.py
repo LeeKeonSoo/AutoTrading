@@ -90,7 +90,9 @@ class GeminiClient:
             )
 
             # Extract text from response
-            response_text = response.text.strip()
+            response_text = self._extract_text(response)
+            if not response_text:
+                raise ValueError("Empty response from Gemini")
 
             # Parse JSON
             try:
@@ -139,7 +141,14 @@ class GeminiClient:
                 contents="Respond with just the word 'OK' if you can read this.",
                 config=types.GenerateContentConfig(max_output_tokens=10),
             )
-            result = "ok" in response.text.lower()
+            response_text = self._extract_text(response)
+            if response_text is None:
+                logger.warning(
+                    "Empty response text during connection test. %s",
+                    self._summarize_response(response),
+                )
+                return False
+            result = "ok" in response_text.lower()
             if result:
                 logger.info("Gemini API connection OK")
             else:
@@ -164,6 +173,46 @@ class GeminiClient:
         except Exception as e:
             logger.error(f"Failed to list models: {e}")
             return []
+
+    @staticmethod
+    def _summarize_response(response: Any) -> str:
+        """Summarize a response for debugging without dumping full content."""
+        candidates = getattr(response, "candidates", None)
+        candidate_count = len(candidates) if candidates else 0
+        finish_reason = None
+        if candidates:
+            finish_reason = getattr(candidates[0], "finish_reason", None)
+        prompt_feedback = getattr(response, "prompt_feedback", None)
+        return (
+            f"candidates={candidate_count}, "
+            f"finish_reason={finish_reason}, "
+            f"prompt_feedback={prompt_feedback}"
+        )
+
+    @staticmethod
+    def _extract_text(response: Any) -> Optional[str]:
+        """Extract text from Gemini response across SDK variants."""
+        text = getattr(response, "text", None)
+        if isinstance(text, str):
+            return text.strip()
+
+        candidates = getattr(response, "candidates", None)
+        if not candidates:
+            return None
+
+        content = getattr(candidates[0], "content", None)
+        parts = getattr(content, "parts", None) if content else None
+        if not parts:
+            return None
+
+        collected = []
+        for part in parts:
+            part_text = getattr(part, "text", None)
+            if part_text:
+                collected.append(part_text)
+        if not collected:
+            return None
+        return "".join(collected).strip()
 
 
 if __name__ == "__main__":
