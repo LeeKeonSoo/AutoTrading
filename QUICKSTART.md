@@ -25,9 +25,15 @@ pip install -r requirements.txt
 2. Click "Get API Key"
 3. Copy your key
 
-### Binance API (Optional for testing)
+### Binance Demo API (for testing - RECOMMENDED)
+1. Go to https://testnet.binance.vision/
+2. Click "Generate HMAC_SHA256 Key"
+3. Copy your demo API key and secret
+4. You'll get virtual balance automatically!
+
+### Binance Live API (for real trading - USE WITH CAUTION)
 1. Go to https://www.binance.com/en/my/settings/api-management
-2. Create API keys (or use demo mode for paper trading)
+2. Create API keys
 3. Enable "Enable Spot & Margin Trading" permission
 
 ## Step 3: Configure (1 min)
@@ -102,10 +108,11 @@ Requesting decision from Gemini...
 - Remove any quotes or spaces
 - The key should start with "AIza..."
 
-### "Binance connection failed"
-- Using demo mode? Make sure `BINANCE_DEMO_MODE=true`
-- Check your API keys are correct
-- Ensure API keys have trading permissions enabled
+### "Binance connection failed" or "Invalid Api-Key ID"
+- Using demo mode? Get demo API keys from https://testnet.binance.vision/
+- Make sure `BINANCE_DEMO_MODE=true` in your `.env` file
+- Demo API keys are different from live API keys!
+- Live Binance keys won't work with demo mode
 
 ### "Module not found"
 - Did you activate the virtual environment?

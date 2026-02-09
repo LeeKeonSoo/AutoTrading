@@ -60,10 +60,17 @@ class BinanceClient:
             },
         }
 
-        # Demo mode: paper trading (no real orders executed)
-        # In demo mode, we'll simulate orders without actually placing them
+        # Demo mode: Use Binance demo trading API (https://demo-api.binance.com)
+        # Requires demo API keys from https://testnet.binance.vision/
         if self.demo_mode:
-            logger.warning("⚠️  Demo mode enabled - No real orders will be placed!")
+            logger.warning("⚠️  Demo mode enabled - Using Binance Demo API (demo-api.binance.com)")
+            # Override URLs to use demo API endpoints
+            config["urls"] = {
+                "api": {
+                    "public": "https://demo-api.binance.com/api/v3",
+                    "private": "https://demo-api.binance.com/api/v3",
+                },
+            }
 
         exchange = ccxt.binance(config)
 
@@ -329,8 +336,9 @@ class BinanceClient:
                 side=side.value,
                 amount=amount,
             )
+            mode = "[DEMO]" if self.demo_mode else "[LIVE]"
             logger.info(
-                f"Created market {side.value} order: {amount} {symbol} (ID: {order['id']})"
+                f"{mode} Created market {side.value} order: {amount} {symbol} (ID: {order['id']})"
             )
             return order
         except Exception as e:
