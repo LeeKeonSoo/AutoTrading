@@ -26,9 +26,9 @@ pip install -r requirements.txt
 3. Copy your key
 
 ### Binance API (Optional for testing)
-1. Go to https://testnet.binance.vision/
-2. Sign up for testnet account
-3. Get your testnet API keys
+1. Go to https://www.binance.com/en/my/settings/api-management
+2. Create API keys (or use demo mode for paper trading)
+3. Enable "Enable Spot & Margin Trading" permission
 
 ## Step 3: Configure (1 min)
 
@@ -43,9 +43,9 @@ nano .env  # or use your favorite editor
 **Minimum required settings:**
 ```env
 GEMINI_API_KEY=your_gemini_key_here
-BINANCE_API_KEY=your_binance_testnet_key
-BINANCE_API_SECRET=your_binance_testnet_secret
-BINANCE_TESTNET=true
+BINANCE_API_KEY=your_binance_key
+BINANCE_API_SECRET=your_binance_secret
+BINANCE_DEMO_MODE=true
 ```
 
 ## Step 4: Test Run (1 min)
@@ -71,7 +71,7 @@ python main.py
 ============================================================
 Trading Mode:     BACKTEST
 Market Type:      SPOT
-Testnet:          True
+Demo Mode:        True (Paper Trading)
 Symbol:           BTC/USDT
 Timeframe:        1h
 Risk per Trade:   2.0%
@@ -103,9 +103,9 @@ Requesting decision from Gemini...
 - The key should start with "AIza..."
 
 ### "Binance connection failed"
-- Using testnet? Make sure `BINANCE_TESTNET=true`
-- Check if testnet API keys are from https://testnet.binance.vision/
-- Real Binance keys won't work with testnet!
+- Using demo mode? Make sure `BINANCE_DEMO_MODE=true`
+- Check your API keys are correct
+- Ensure API keys have trading permissions enabled
 
 ### "Module not found"
 - Did you activate the virtual environment?

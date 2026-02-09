@@ -49,7 +49,7 @@ notepad .env
 GEMINI_API_KEY=your_gemini_key_here
 BINANCE_API_KEY=your_binance_key
 BINANCE_API_SECRET=your_binance_secret
-BINANCE_TESTNET=true
+BINANCE_DEMO_MODE=true
 ```
 
 ### Step 6: 테스트 실행
@@ -194,10 +194,10 @@ source venv/bin/activate
 
 ### 6. Binance 연결 실패
 
-테스트넷 사용 시:
-- `BINANCE_TESTNET=true` 확인
-- 테스트넷 API 키 사용 (https://testnet.binance.vision/)
-- 실제 Binance API 키는 테스트넷에서 작동 안 함!
+데모 모드 사용 시:
+- `BINANCE_DEMO_MODE=true` 확인
+- Binance API 키가 올바른지 확인
+- API 키에 거래 권한이 활성화되어 있는지 확인
 
 ---
 

@@ -1,6 +1,6 @@
 # 🤖 LLM Auto Trading Bot
 
-AI-powered cryptocurrency trading system that uses Claude (LLM) to make intelligent trading decisions on Binance.
+AI-powered cryptocurrency trading system that uses Gemini (LLM) to make intelligent trading decisions on Binance.
 
 ## ⚠️ Disclaimer
 
@@ -9,24 +9,24 @@ AI-powered cryptocurrency trading system that uses Claude (LLM) to make intellig
 - Trading cryptocurrencies carries significant risk of financial loss
 - This is experimental software and may contain bugs
 - Never invest more than you can afford to lose
-- Always test thoroughly with testnet and paper trading before using real money
+- Always test thoroughly with demo mode and paper trading before using real money
 - The developers are not responsible for any financial losses incurred
 
 ## 🎯 Features
 
-- **LLM-Powered Decision Making**: Uses Anthropic's Claude to analyze market data and make trading decisions
+- **LLM-Powered Decision Making**: Uses Google's Gemini to analyze market data and make trading decisions
 - **Comprehensive Backtesting**: Test strategies on historical data with realistic fees and slippage
 - **Paper Trading**: Practice with real-time data without risking real money
 - **Risk Management**: Built-in stop-loss, position sizing, and daily loss limits
 - **Real-time Monitoring**: Streamlit dashboard and Telegram notifications
 - **Technical Indicators**: RSI, MACD, Bollinger Bands, ATR, and more
-- **Safe by Default**: Starts with testnet and paper trading mode
+- **Safe by Default**: Starts with demo mode and paper trading mode
 
 ## 📋 Prerequisites
 
 - Python 3.11 or higher
-- Binance account (or testnet account for practice)
-- Anthropic API key (for Claude)
+- Binance account (demo mode available for practice)
+- Google Gemini API key (for LLM decisions)
 - Basic understanding of cryptocurrency trading
 
 ## 🚀 Quick Start
@@ -63,12 +63,12 @@ nano .env  # or use your preferred editor
 **Required settings:**
 - `BINANCE_API_KEY`: Your Binance API key ([Get it here](https://www.binance.com/en/my/settings/api-management))
 - `BINANCE_API_SECRET`: Your Binance API secret
-- `ANTHROPIC_API_KEY`: Your Anthropic API key ([Get it here](https://console.anthropic.com/))
-- `BINANCE_TESTNET`: Set to `true` for safe testing
+- `GEMINI_API_KEY`: Your Google Gemini API key ([Get it here](https://aistudio.google.com/apikey))
+- `BINANCE_DEMO_MODE`: Set to `true` for safe testing (no real orders)
 
 **Recommended first-time settings:**
 ```
-BINANCE_TESTNET=true
+BINANCE_DEMO_MODE=true
 TRADING_MODE=backtest
 TRADING_SYMBOL=BTC/USDT
 RISK_PER_TRADE=0.02
@@ -104,7 +104,7 @@ Simulate live trading with real-time data but no real money.
 ```bash
 # In .env file:
 TRADING_MODE=paper
-BINANCE_TESTNET=true
+BINANCE_DEMO_MODE=true
 
 # Run paper trading
 python main.py
@@ -122,7 +122,7 @@ Only use after:
 # In .env file:
 TRADING_MODE=live
 MARKET_TYPE=spot
-BINANCE_TESTNET=false  # Real money!
+BINANCE_DEMO_MODE=false  # Real money!
 
 # Run live trading
 python main.py
@@ -247,13 +247,13 @@ TELEGRAM_CHAT_ID=your_chat_id
 
 ### "ccxt.binance() connection failed"
 - Check your API keys
-- Verify testnet setting matches your API keys
+- Verify demo mode setting matches your API keys
 - Check internet connection
 
-### "Anthropic API error"
+### "Gemini API error"
 - Verify your API key is correct
 - Check API quota and billing
-- Ensure model name is correct
+- Ensure model name is correct (gemini-3-flash-preview)
 
 ### "Insufficient balance"
 - In paper trading, initial balance is set in config
@@ -268,7 +268,7 @@ TELEGRAM_CHAT_ID=your_chat_id
 ## 📚 Documentation
 
 - [Binance API Documentation](https://binance-docs.github.io/apidocs/spot/en/)
-- [Anthropic API Documentation](https://docs.anthropic.com/)
+- [Google Gemini API Documentation](https://ai.google.dev/docs)
 - [CCXT Documentation](https://docs.ccxt.com/)
 
 ## 🛣️ Roadmap
@@ -293,7 +293,7 @@ This project is for personal use and educational purposes. No license is granted
 
 ## 💡 Tips for Success
 
-1. **Start Small**: Always begin with testnet and paper trading
+1. **Start Small**: Always begin with demo mode and paper trading
 2. **Be Patient**: Test for at least 2-4 weeks before live trading
 3. **Monitor Actively**: Don't set and forget - watch your trades
 4. **Adjust Parameters**: Market conditions change, adapt your strategy
