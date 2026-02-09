@@ -412,7 +412,7 @@ if __name__ == "__main__":
     from datetime import datetime, timedelta
     from src.data.binance_client import BinanceClient
 
-    client = BinanceClient(testnet=True)
+    client = BinanceClient(demo_mode=True)
     indicators = TechnicalIndicators()
 
     # Fetch some data

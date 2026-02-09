@@ -25,14 +25,14 @@ class Settings(BaseSettings):
     # ============================================
     binance_api_key: str = Field(..., description="Binance API key")
     binance_api_secret: str = Field(..., description="Binance API secret")
-    binance_testnet: bool = Field(default=True, description="Use Binance testnet")
+    binance_demo_mode: bool = Field(default=True, description="Use Binance demo mode (paper trading)")
 
     # ============================================
     # Google Gemini API Configuration
     # ============================================
     gemini_api_key: str = Field(..., description="Gemini API key")
     gemini_model: str = Field(
-        default="gemini-2.0-flash-exp",
+        default="gemini-3-flash-preview",
         description="Gemini model to use"
     )
     gemini_max_tokens: int = Field(default=4096, description="Max tokens per request")
@@ -239,18 +239,17 @@ class Settings(BaseSettings):
     @property
     def is_live_trading(self) -> bool:
         """Check if running in live trading mode."""
-        return self.trading_mode == "live" and not self.binance_testnet
+        return self.trading_mode == "live" and not self.binance_demo_mode
 
     @property
-    def is_testnet(self) -> bool:
-        """Check if using testnet."""
-        return self.binance_testnet
+    def is_demo_mode(self) -> bool:
+        """Check if using demo mode (paper trading)."""
+        return self.binance_demo_mode
 
     @property
     def binance_base_url(self) -> str:
         """Get Binance API base URL."""
-        if self.binance_testnet:
-            return "https://testnet.binance.vision"
+        # Demo mode uses same API as live but with paper trading
         return "https://api.binance.com"
 
     @property
@@ -311,7 +310,7 @@ class Settings(BaseSettings):
             warnings.append(f"⚠️  Low confidence threshold: {self.min_confidence} (recommended: ≥0.6)")
 
         # Check API keys
-        if not self.binance_testnet and self.is_live_trading:
+        if not self.binance_demo_mode and self.is_live_trading:
             if "your_" in self.binance_api_key.lower():
                 warnings.append("❌ ERROR: Binance API key not configured!")
 
@@ -338,7 +337,7 @@ class Settings(BaseSettings):
         if self.market_type == "futures":
             print(f"Leverage:         {self.leverage}x")
             print(f"Margin Mode:      {self.margin_mode.upper()}")
-        print(f"Testnet:          {self.binance_testnet}")
+        print(f"Demo Mode:        {self.binance_demo_mode} ({'Paper Trading' if self.binance_demo_mode else 'LIVE TRADING'})")
         print(f"Symbol:           {self.trading_symbol}")
         print(f"Timeframe:        {self.trading_timeframe}")
         print(f"Risk per Trade:   {self.risk_per_trade*100}%")

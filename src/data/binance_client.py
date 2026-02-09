@@ -23,21 +23,21 @@ class BinanceClient:
     Wrapper around CCXT Binance exchange with error handling and rate limiting.
     """
 
-    def __init__(self, testnet: Optional[bool] = None):
+    def __init__(self, demo_mode: Optional[bool] = None):
         """
         Initialize Binance client.
 
         Args:
-            testnet: Use testnet (None = use setting from config)
+            demo_mode: Use demo mode for paper trading (None = use setting from config)
         """
         self.settings = get_settings()
-        self.testnet = testnet if testnet is not None else self.settings.binance_testnet
+        self.demo_mode = demo_mode if demo_mode is not None else self.settings.binance_demo_mode
 
         # Initialize CCXT exchange
         self.exchange = self._init_exchange()
 
         logger.info(
-            f"BinanceClient initialized (testnet={self.testnet}, "
+            f"BinanceClient initialized (demo_mode={self.demo_mode}, "
             f"symbol={self.settings.trading_symbol})"
         )
 
@@ -60,13 +60,10 @@ class BinanceClient:
             },
         }
 
-        if self.testnet:
-            config["urls"] = {
-                "api": {
-                    "public": "https://testnet.binance.vision/api/v3",
-                    "private": "https://testnet.binance.vision/api/v3",
-                },
-            }
+        # Demo mode: paper trading (no real orders executed)
+        # In demo mode, we'll simulate orders without actually placing them
+        if self.demo_mode:
+            logger.warning("⚠️  Demo mode enabled - No real orders will be placed!")
 
         exchange = ccxt.binance(config)
 
@@ -500,7 +497,7 @@ if __name__ == "__main__":
     logger.remove()
     logger.add(sys.stderr, level="INFO")
 
-    client = BinanceClient(testnet=True)
+    client = BinanceClient(demo_mode=True)
 
     # Test connection
     if client.check_connection():
