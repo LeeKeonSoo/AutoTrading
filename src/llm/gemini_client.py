@@ -142,9 +142,9 @@ class GeminiClient:
                 config=types.GenerateContentConfig(max_output_tokens=10),
             )
             response_text = self._extract_text(response)
-            if response_text is None:
+            if not response_text:
                 logger.warning(
-                    "Empty response text during connection test. %s",
+                    "Empty response text during connection test. {}",
                     self._summarize_response(response),
                 )
                 return False
@@ -152,7 +152,7 @@ class GeminiClient:
             if result:
                 logger.info("Gemini API connection OK")
             else:
-                logger.warning(f"Unexpected test response: {response.text}")
+                logger.warning(f"Unexpected test response: {response_text}")
             return result
         except Exception as e:
             logger.error(f"Gemini API connection failed: {e}")
