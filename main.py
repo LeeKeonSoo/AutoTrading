@@ -72,9 +72,30 @@ def run_trading_bot():
     logger.info("✅ All components initialized successfully")
 
     # Get initial account balance
-    balance = client.fetch_balance()
     quote_currency = settings.trading_symbol.split("/")[1]
-    account_balance = float(balance["free"].get(quote_currency, 0))
+    balance = None
+    try:
+        spot_balance = client.fetch_balance("spot")
+        spot_free = float(spot_balance.get("free", {}).get(quote_currency, 0))
+        logger.info(f"Spot free balance: {spot_free:,.2f} {quote_currency}")
+    except Exception as e:
+        logger.warning(f"Failed to fetch spot balance: {e}")
+        spot_free = 0.0
+
+    try:
+        futures_balance = client.fetch_balance("future")
+        futures_free = float(futures_balance.get("free", {}).get(quote_currency, 0))
+        logger.info(f"Futures free balance: {futures_free:,.2f} {quote_currency}")
+    except Exception as e:
+        logger.warning(f"Failed to fetch futures balance: {e}")
+        futures_free = 0.0
+
+    if settings.market_type == "futures":
+        balance = futures_balance if "futures_balance" in locals() else None
+        account_balance = futures_free
+    else:
+        balance = spot_balance if "spot_balance" in locals() else None
+        account_balance = spot_free
 
     logger.info(f"Account balance: {account_balance:,.2f} {quote_currency}")
 

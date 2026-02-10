@@ -48,14 +48,25 @@ class BinanceClient:
         Returns:
             CCXT Binance exchange instance
         """
+        if self.demo_mode:
+            api_key = self.settings.binance_demo_api_key
+            api_secret = self.settings.binance_demo_api_secret
+            if not api_key or not api_secret:
+                raise ValueError("Demo mode requires BINANCE_DEMO_API_KEY and BINANCE_DEMO_API_SECRET")
+        else:
+            api_key = self.settings.binance_api_key
+            api_secret = self.settings.binance_api_secret
+            if not api_key or not api_secret:
+                raise ValueError("Live mode requires BINANCE_API_KEY and BINANCE_API_SECRET")
+
         config = {
-            "apiKey": self.settings.binance_api_key,
-            "secret": self.settings.binance_api_secret,
+            "apiKey": api_key,
+            "secret": api_secret,
             "enableRateLimit": True,
             "rateLimit": 60000 / self.settings.api_rate_limit,  # Convert to ms
             "timeout": self.settings.api_timeout * 1000,  # Convert to ms
             "options": {
-                "defaultType": "spot",
+                "defaultType": self.settings.market_type,
                 "adjustForTimeDifference": True,
             },
         }
@@ -71,6 +82,7 @@ class BinanceClient:
                     "private": "https://demo-api.binance.com/api/v3",
                 },
             }
+            config["options"]["fetchCurrencies"] = False
 
         exchange = ccxt.binance(config)
 
@@ -247,15 +259,19 @@ class BinanceClient:
         wait=wait_exponential(multiplier=1, min=1, max=10),
         retry=retry_if_exception_type((ccxt.NetworkError, ccxt.ExchangeNotAvailable)),
     )
-    def fetch_balance(self) -> Dict[str, Any]:
+    def fetch_balance(self, account_type: Optional[str] = None) -> Dict[str, Any]:
         """
         Fetch account balance.
+
+        Args:
+            account_type: Account type override (e.g., "spot", "future")
 
         Returns:
             Balance dictionary
         """
         try:
-            balance = self.exchange.fetch_balance()
+            params = {"type": account_type} if account_type else None
+            balance = self.exchange.fetch_balance(params) if params else self.exchange.fetch_balance()
             logger.debug("Fetched account balance")
             return balance
         except Exception as e:

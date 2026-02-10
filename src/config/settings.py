@@ -23,8 +23,10 @@ class Settings(BaseSettings):
     # ============================================
     # Binance API Configuration
     # ============================================
-    binance_api_key: str = Field(..., description="Binance API key")
-    binance_api_secret: str = Field(..., description="Binance API secret")
+    binance_api_key: Optional[str] = Field(default=None, description="Binance API key")
+    binance_api_secret: Optional[str] = Field(default=None, description="Binance API secret")
+    binance_demo_api_key: Optional[str] = Field(default=None, description="Binance demo API key")
+    binance_demo_api_secret: Optional[str] = Field(default=None, description="Binance demo API secret")
     binance_demo_mode: bool = Field(default=True, description="Use Binance demo mode (paper trading)")
 
     # ============================================
@@ -249,7 +251,8 @@ class Settings(BaseSettings):
     @property
     def binance_base_url(self) -> str:
         """Get Binance API base URL."""
-        # Demo mode uses same API as live but with paper trading
+        if self.binance_demo_mode:
+            return "https://demo-api.binance.com"
         return "https://api.binance.com"
 
     @property
@@ -310,8 +313,15 @@ class Settings(BaseSettings):
             warnings.append(f"⚠️  Low confidence threshold: {self.min_confidence} (recommended: ≥0.6)")
 
         # Check API keys
-        if not self.binance_demo_mode and self.is_live_trading:
-            if "your_" in self.binance_api_key.lower():
+        if self.binance_demo_mode:
+            if not self.binance_demo_api_key or not self.binance_demo_api_secret:
+                warnings.append("❌ ERROR: Demo API keys not configured!")
+            elif "your_" in self.binance_demo_api_key.lower():
+                warnings.append("❌ ERROR: Demo API key not configured!")
+        elif self.is_live_trading:
+            if not self.binance_api_key or not self.binance_api_secret:
+                warnings.append("❌ ERROR: Binance API keys not configured!")
+            elif "your_" in self.binance_api_key.lower():
                 warnings.append("❌ ERROR: Binance API key not configured!")
 
         if "your_" in self.gemini_api_key.lower():
