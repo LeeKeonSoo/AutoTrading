@@ -73,31 +73,17 @@ def run_trading_bot():
 
     # Get initial account balance
     quote_currency = settings.trading_symbol.split("/")[1]
-    balance = None
     try:
-        spot_balance = client.fetch_balance("spot")
-        spot_free = float(spot_balance.get("free", {}).get(quote_currency, 0))
-        logger.info(f"Spot free balance: {spot_free:,.2f} {quote_currency}")
+        # market_type에 맞는 잔고만 조회
+        # futures: defaultType이 futures이므로 파라미터 없이 호출
+        # spot: "spot" 명시
+        balance_type = None if settings.market_type == "futures" else "spot"
+        balance = client.fetch_balance(balance_type)
+        account_balance = float(balance.get("free", {}).get(quote_currency, 0))
+        logger.info(f"{settings.market_type.upper()} free balance: {account_balance:,.2f} {quote_currency}")
     except Exception as e:
-        logger.warning(f"Failed to fetch spot balance: {e}")
-        spot_free = 0.0
-
-    try:
-        futures_balance = client.fetch_balance("future")
-        futures_free = float(futures_balance.get("free", {}).get(quote_currency, 0))
-        logger.info(f"Futures free balance: {futures_free:,.2f} {quote_currency}")
-    except Exception as e:
-        logger.warning(f"Failed to fetch futures balance: {e}")
-        futures_free = 0.0
-
-    if settings.market_type == "futures":
-        balance = futures_balance if "futures_balance" in locals() else None
-        account_balance = futures_free
-    else:
-        balance = spot_balance if "spot_balance" in locals() else None
-        account_balance = spot_free
-
-    logger.info(f"Account balance: {account_balance:,.2f} {quote_currency}")
+        logger.error(f"Failed to fetch {settings.market_type} balance: {e}")
+        return
 
     if account_balance <= 0:
         logger.error("Insufficient balance. Exiting.")
@@ -200,8 +186,8 @@ def run_trading_bot():
                 logger.info("\n⏸️  Backtest mode - stopping after one iteration")
                 break
             else:
-                wait_seconds = 3600  # 1 hour for 1h timeframe
-                logger.info(f"\n⏳ Waiting {wait_seconds}s until next analysis...")
+                wait_seconds = BinanceClient._timeframe_to_seconds(settings.trading_timeframe)
+                logger.info(f"\n⏳ Waiting {wait_seconds}s ({settings.trading_timeframe}) until next analysis...")
                 time.sleep(wait_seconds)
 
         except KeyboardInterrupt:

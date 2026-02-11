@@ -31,7 +31,7 @@ class BinanceClient:
             demo_mode: Use demo mode for paper trading (None = use setting from config)
         """
         self.settings = get_settings()
-        self.demo_mode = demo_mode if demo_mode is not None else self.settings.binance_demo_mode
+        self.demo_mode = demo_mode if demo_mode is not None else self.settings.is_demo_mode
 
         # Initialize CCXT exchange
         self.exchange = self._init_exchange()
@@ -66,7 +66,8 @@ class BinanceClient:
             "rateLimit": 60000 / self.settings.api_rate_limit,  # Convert to ms
             "timeout": self.settings.api_timeout * 1000,  # Convert to ms
             "options": {
-                "defaultType": self.settings.market_type,
+                # CCXT는 "future" (s 없음)를 사용, settings의 "futures"와 다름
+                "defaultType": "future" if self.settings.market_type == "futures" else self.settings.market_type,
                 "adjustForTimeDifference": True,
             },
         }
@@ -74,14 +75,29 @@ class BinanceClient:
         # Demo mode: Use Binance demo trading API (https://demo-api.binance.com)
         # Requires demo API keys from https://testnet.binance.vision/
         if self.demo_mode:
-            logger.warning("⚠️  Demo mode enabled - Using Binance Demo API (demo-api.binance.com)")
-            # Override URLs to use demo API endpoints
-            config["urls"] = {
-                "api": {
-                    "public": "https://demo-api.binance.com/api/v3",
-                    "private": "https://demo-api.binance.com/api/v3",
-                },
-            }
+            logger.warning(
+                f"⚠️  Demo mode enabled - Using Binance Demo API "
+                f"(demo-api.binance.com, {self.settings.market_type})"
+            )
+            if self.settings.market_type == "futures":
+                # Futures Demo: demo-fapi.binance.com (Spot Demo와 도메인 다름)
+                # CCXT는 urls.api 내부의 키를 사용하므로 반드시 api 딕셔너리 안에 설정
+                config["urls"] = {
+                    "api": {
+                        "fapiPublic": "https://demo-fapi.binance.com/fapi/v1",
+                        "fapiPrivate": "https://demo-fapi.binance.com/fapi/v1",
+                        "fapiPublicV2": "https://demo-fapi.binance.com/fapi/v2",
+                        "fapiPrivateV2": "https://demo-fapi.binance.com/fapi/v2",
+                    }
+                }
+            else:
+                # Spot Demo: demo-api.binance.com
+                config["urls"] = {
+                    "api": {
+                        "public": "https://demo-api.binance.com/api/v3",
+                        "private": "https://demo-api.binance.com/api/v3",
+                    },
+                }
             config["options"]["fetchCurrencies"] = False
 
         exchange = ccxt.binance(config)

@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"C:\\\\Users\\\\ksl1165\\\\AppData\\\\Local\\\\anaconda3\\\\envs\\\\trading\\\\python.exe\" -c:*)"
+    ]
+  }
+}

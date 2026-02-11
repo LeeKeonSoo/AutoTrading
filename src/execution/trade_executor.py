@@ -55,6 +55,10 @@ class TradeExecutor:
             if decision.action == TradingAction.BUY:
                 return self._execute_buy(decision, position_size)
             elif decision.action == TradingAction.SELL:
+                # Spot에서는 보유 포지션 없이 SELL 불가 (공매도 불가)
+                if self.settings.market_type == "spot" and not self.current_position:
+                    logger.warning("Spot market: SELL skipped (no open BUY position to sell)")
+                    return {"status": "skipped", "message": "Spot SELL requires an open BUY position"}
                 return self._execute_sell(decision, position_size)
             elif decision.action == TradingAction.CLOSE:
                 return self._execute_close()

@@ -23,11 +23,10 @@ class Settings(BaseSettings):
     # ============================================
     # Binance API Configuration
     # ============================================
-    binance_api_key: Optional[str] = Field(default=None, description="Binance API key")
-    binance_api_secret: Optional[str] = Field(default=None, description="Binance API secret")
+    binance_api_key: Optional[str] = Field(default=None, description="Binance live API key")
+    binance_api_secret: Optional[str] = Field(default=None, description="Binance live API secret")
     binance_demo_api_key: Optional[str] = Field(default=None, description="Binance demo API key")
     binance_demo_api_secret: Optional[str] = Field(default=None, description="Binance demo API secret")
-    binance_demo_mode: bool = Field(default=True, description="Use Binance demo mode (paper trading)")
 
     # ============================================
     # Google Gemini API Configuration
@@ -63,9 +62,9 @@ class Settings(BaseSettings):
         default="isolated",
         description="Margin mode for futures"
     )
-    trading_mode: Literal["backtest", "paper", "live"] = Field(
-        default="backtest",
-        description="Trading mode"
+    trading_mode: Literal["live", "demo", "backtest"] = Field(
+        default="demo",
+        description="Trading mode: live (real money), demo (Binance Demo Trading), backtest"
     )
     trading_timeframe: str = Field(default="1h", description="Timeframe for analysis")
 
@@ -241,17 +240,17 @@ class Settings(BaseSettings):
     @property
     def is_live_trading(self) -> bool:
         """Check if running in live trading mode."""
-        return self.trading_mode == "live" and not self.binance_demo_mode
+        return self.trading_mode == "live"
 
     @property
     def is_demo_mode(self) -> bool:
-        """Check if using demo mode (paper trading)."""
-        return self.binance_demo_mode
+        """Check if using Binance Demo Trading."""
+        return self.trading_mode == "demo"
 
     @property
     def binance_base_url(self) -> str:
         """Get Binance API base URL."""
-        if self.binance_demo_mode:
+        if self.trading_mode == "demo":
             return "https://demo-api.binance.com"
         return "https://api.binance.com"
 
@@ -300,7 +299,7 @@ class Settings(BaseSettings):
 
         # Check for live trading warnings
         if self.is_live_trading:
-            warnings.append("⚠️  WARNING: Live trading mode enabled! Real money at risk!")
+            warnings.append("⚠️  WARNING: TRADING_MODE=live. Real money at risk!")
 
         # Check risk settings
         if self.risk_per_trade > 0.05:
@@ -313,16 +312,16 @@ class Settings(BaseSettings):
             warnings.append(f"⚠️  Low confidence threshold: {self.min_confidence} (recommended: ≥0.6)")
 
         # Check API keys
-        if self.binance_demo_mode:
+        if self.trading_mode == "demo":
             if not self.binance_demo_api_key or not self.binance_demo_api_secret:
                 warnings.append("❌ ERROR: Demo API keys not configured!")
             elif "your_" in self.binance_demo_api_key.lower():
                 warnings.append("❌ ERROR: Demo API key not configured!")
-        elif self.is_live_trading:
+        elif self.trading_mode == "live":
             if not self.binance_api_key or not self.binance_api_secret:
-                warnings.append("❌ ERROR: Binance API keys not configured!")
+                warnings.append("❌ ERROR: Binance live API keys not configured!")
             elif "your_" in self.binance_api_key.lower():
-                warnings.append("❌ ERROR: Binance API key not configured!")
+                warnings.append("❌ ERROR: Binance live API key not configured!")
 
         if "your_" in self.gemini_api_key.lower():
             warnings.append("❌ ERROR: Gemini API key not configured!")
@@ -342,12 +341,11 @@ class Settings(BaseSettings):
         print("=" * 60)
         print("🤖 Auto Trading Bot - Configuration Summary")
         print("=" * 60)
-        print(f"Trading Mode:     {self.trading_mode.upper()}")
+        print(f"Trading Mode:     {self.trading_mode.upper()} ({'Binance Demo Trading' if self.is_demo_mode else 'LIVE TRADING' if self.is_live_trading else 'Backtest'})")
         print(f"Market Type:      {self.market_type.upper()}")
         if self.market_type == "futures":
             print(f"Leverage:         {self.leverage}x")
             print(f"Margin Mode:      {self.margin_mode.upper()}")
-        print(f"Demo Mode:        {self.binance_demo_mode} ({'Paper Trading' if self.binance_demo_mode else 'LIVE TRADING'})")
         print(f"Symbol:           {self.trading_symbol}")
         print(f"Timeframe:        {self.trading_timeframe}")
         print(f"Risk per Trade:   {self.risk_per_trade*100}%")
